@@ -27,6 +27,7 @@ import com.wit.gotthatspot.model.ParkingLocation;
 import com.wit.gotthatspot.service.ParkingLocationManager;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 public class MapActivity extends FragmentActivity {
@@ -217,6 +218,12 @@ public class MapActivity extends FragmentActivity {
 					final String name = parkingLocation.getName();
 
 					markerOptions.title(name);
+
+					final BigDecimal costPerMinute = parkingLocation.getCostPerMinute();
+					final String snippet = this.context
+							.getString(R.string.cost_per_minute, costPerMinute.toString());
+
+					markerOptions.snippet(snippet);
 					this.state.googleMap.addMarker(markerOptions);
 				}
 			} else {
