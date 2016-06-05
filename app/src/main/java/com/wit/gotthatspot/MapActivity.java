@@ -127,6 +127,8 @@ public class MapActivity extends FragmentActivity {
 					PackageManager.PERMISSION_GRANTED;
 
 			if (locationAccessGranted) {
+				googleMap.setMyLocationEnabled(true);
+
 				final Location latestLocation =
 						LocationServices.FusedLocationApi
 								.getLastLocation(this.state.googleApiClient);
@@ -139,15 +141,10 @@ public class MapActivity extends FragmentActivity {
 
 					toast.show();
 				} else {
-					final MarkerOptions markerOptions = new MarkerOptions();
 					final double latestLocationLatitude = latestLocation.getLatitude();
 					final double latestLocationLongitude = latestLocation.getLongitude();
 					final LatLng latestLatLng =
 							new LatLng(latestLocationLatitude, latestLocationLongitude);
-
-					markerOptions.position(latestLatLng);
-					googleMap.addMarker(markerOptions);
-
 					final CameraUpdate cameraUpdate =
 							CameraUpdateFactory
 									.newLatLngZoom(latestLatLng, MapActivity.INITIAL_ZOOM);
