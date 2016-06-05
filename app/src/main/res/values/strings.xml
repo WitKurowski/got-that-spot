@@ -1,4 +1,5 @@
 <resources>
 	<string name="app_name">Got That Spot</string>
+	<string name="failed_to_retrieve_latest_location">Failed to retrieve latest location.</string>
 	<string name="title_activity_map">Map</string>
 </resources>
