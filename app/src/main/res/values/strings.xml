@@ -1,5 +1,7 @@
 <resources>
 	<string name="app_name">Got That Spot</string>
 	<string name="failed_to_retrieve_latest_location">Failed to retrieve latest location.</string>
+	<string name="no_parking_locations_found_nearby">No parking locations found nearby.</string>
 	<string name="title_activity_map">Map</string>
+	<string name="unable_to_retrieve_nearest_parking_locations">Unable to retrieve nearest parking locations.</string>
 </resources>
