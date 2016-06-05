@@ -141,7 +141,7 @@ public class MapActivity extends FragmentActivity {
 							CameraUpdateFactory
 									.newLatLngZoom(latestLatLng, MapActivity.INITIAL_ZOOM);
 
-					googleMap.moveCamera(cameraUpdate);
+					googleMap.animateCamera(cameraUpdate);
 				}
 			}
 		}
