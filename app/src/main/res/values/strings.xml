@@ -8,8 +8,10 @@
 	<string name="failed_to_reserve_parking_location">Failed to reserve parking location with ID "%1$d".</string>
 	<string name="minutes">mins</string>
 	<string name="no_parking_locations_found_nearby">No parking locations found nearby.</string>
+	<string name="no_reservation_length_specified">No reservation length specified.</string>
 	<string name="parking_location_successfully_canceled">Parking location successfully canceled.</string>
 	<string name="parking_location_successfully_reserved">Parking location successfully reserved.</string>
+	<string name="reservation_length_must_be_between_x_and_y">Reservation length must be between %1$d and %2$d minutes.</string>
 	<string name="select_nearby_parking_location">Select a nearby parking location</string>
 	<string name="successfully_reserved">Successfully reserved</string>
 	<string name="reserve">Reserve</string>

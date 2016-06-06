@@ -479,12 +479,39 @@ public class MapActivity extends FragmentActivity {
 
 		@Override
 		public void onClick(final View view) {
+			final String reservationLengthString =
+					this.viewHolder.reservationLengthEditText.getText().toString();
 			final Context context = view.getContext();
-			final ReserveAsyncTask reserveAsyncTask =
-					new ReserveAsyncTask(context, this.parkingLocation, this.state, this.viewHolder,
-							this.viewUpdater);
 
-			reserveAsyncTask.execute();
+			if (reservationLengthString.length() == 0) {
+				final Toast toast =
+						Toast.makeText(context, R.string.no_reservation_length_specified,
+								Toast.LENGTH_SHORT);
+
+				toast.show();
+			} else {
+				final int reservationLength = Integer.parseInt(reservationLengthString);
+				final int minReservationTimeInMinutes =
+						this.parkingLocation.getMinReservationTimeInMinutes();
+				final int maxReservationTimeInMinutes =
+						this.parkingLocation.getMaxReservationTimeInMinutes();
+
+				if (reservationLength >= minReservationTimeInMinutes &&
+						reservationLength <= maxReservationTimeInMinutes) {
+					final ReserveAsyncTask reserveAsyncTask =
+							new ReserveAsyncTask(context, this.parkingLocation, this.state,
+									this.viewHolder, this.viewUpdater);
+
+					reserveAsyncTask.execute();
+				} else {
+					final String message =
+							context.getString(R.string.reservation_length_must_be_between_x_and_y,
+									minReservationTimeInMinutes, maxReservationTimeInMinutes);
+					final Toast toast = Toast.makeText(context, message, Toast.LENGTH_SHORT);
+
+					toast.show();
+				}
+			}
 		}
 	}
 
