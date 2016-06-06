@@ -12,7 +12,9 @@ import retrofit2.Call;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.Body;
 import retrofit2.http.GET;
+import retrofit2.http.PATCH;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
@@ -36,6 +38,30 @@ public class ParkingLocationManager {
 		final Retrofit retrofit = retrofitBuilder.build();
 
 		this.parkingSpotRetrofitManager = retrofit.create(ParkingSpotRetrofitManager.class);
+	}
+
+	public ParkingLocation cancel(final ParkingLocation parkingLocation)
+			throws IOException, ServerException {
+		final long id = parkingLocation.getId();
+
+		parkingLocation.setReserved(false);
+		parkingLocation.setReservedUntil(null);
+
+		final Call<ParkingLocation> call =
+				this.parkingSpotRetrofitManager.cancel(id, parkingLocation);
+		final Response<ParkingLocation> response = call.execute();
+		final boolean successful = response.isSuccessful();
+		final ParkingLocation updatedParkingLocation;
+
+		if (successful) {
+			updatedParkingLocation = response.body();
+		} else {
+			final String message = response.message();
+
+			throw new ServerException(message);
+		}
+
+		return updatedParkingLocation;
 	}
 
 	public List<ParkingLocation> get(final Location location) throws IOException, ServerException {
@@ -79,6 +105,9 @@ public class ParkingLocationManager {
 	}
 
 	private interface ParkingSpotRetrofitManager {
+		@PATCH("/api/v1/parkinglocations/{id}/")
+		Call<ParkingLocation> cancel(@Path("id") long id, @Body ParkingLocation parkingLocation);
+
 		@GET("/api/v1/parkinglocations/search")
 		Call<List<ParkingLocation>> get(@Query("lat") double latitude,
 				@Query("lng") double longitude);

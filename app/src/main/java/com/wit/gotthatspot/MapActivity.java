@@ -34,6 +34,7 @@ import com.wit.gotthatspot.service.ParkingLocationManager;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +47,7 @@ public class MapActivity extends FragmentActivity {
 	private static final float INITIAL_ZOOM = 15.0f;
 	private final State state = new State();
 	private final ViewHolder viewHolder = new ViewHolder();
+	private final ViewUpdater viewUpdater = new ViewUpdater(this, this.state, this.viewHolder);
 
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
@@ -55,14 +57,7 @@ public class MapActivity extends FragmentActivity {
 
 		ButterKnife.bind(this.viewHolder, this);
 
-		this.viewHolder.alreadyReservedView.setVisibility(View.INVISIBLE);
-		this.viewHolder.minutesLabelView.setVisibility(View.INVISIBLE);
-		this.viewHolder.parkingLocationNameTextView.setText(null);
-		this.viewHolder.parkingLocationCostPerMinuteTextView.setText(null);
-		this.viewHolder.reservationLengthEditText.setVisibility(View.INVISIBLE);
-		this.viewHolder.reservationLengthSeekBar.setVisibility(View.INVISIBLE);
-		this.viewHolder.reserveButton.setVisibility(View.INVISIBLE);
-		this.viewHolder.selectNearbyParkingLocationView.setVisibility(View.VISIBLE);
+		this.viewUpdater.prepare();
 
 		this.setupGoogleApiClient();
 	}
@@ -85,7 +80,7 @@ public class MapActivity extends FragmentActivity {
 		final GoogleApiClient.Builder googleApiClientBuilder = new GoogleApiClient.Builder(this);
 		final FragmentManager supportFragmentManager = this.getSupportFragmentManager();
 		final ConnectionCallbacks connectionCallbacks = new ConnectionCallbacks(this,
-				supportFragmentManager, this.state, this.viewHolder);
+				supportFragmentManager, this.state, this.viewHolder, this.viewUpdater);
 
 		googleApiClientBuilder.addConnectionCallbacks(connectionCallbacks);
 
@@ -98,18 +93,110 @@ public class MapActivity extends FragmentActivity {
 		this.state.googleApiClient = googleApiClientBuilder.build();
 	}
 
+	private static final class CancelAsyncTask extends AsyncTask<Void, Void, Void> {
+		private final Context context;
+		private final ParkingLocation parkingLocation;
+		private final State state;
+		private final ViewUpdater viewUpdater;
+		private String errorMessage;
+
+		private CancelAsyncTask(final Context context, final ParkingLocation parkingLocation,
+				final State state, final ViewUpdater viewUpdater) {
+			this.context = context;
+			this.parkingLocation = parkingLocation;
+			this.state = state;
+			this.viewUpdater = viewUpdater;
+		}
+
+		@Override
+		protected Void doInBackground(final Void... params) {
+			final ParkingLocationManager parkingLocationManager =
+					ParkingLocationManager.getInstance();
+
+			try {
+				parkingLocationManager.cancel(this.parkingLocation);
+			} catch (final IOException ioException) {
+				ioException.printStackTrace();
+
+				final String name = this.parkingLocation.getName();
+
+				this.errorMessage = this.context
+						.getString(R.string.unable_to_cancel_parking_location_x,
+								name);
+			} catch (final ServerException serverException) {
+				serverException.printStackTrace();
+
+				final long id = this.parkingLocation.getId();
+
+				this.errorMessage =
+						this.context.getString(R.string.failed_to_cancel_parking_location,
+								id);
+			}
+
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(final Void result) {
+			super.onPostExecute(result);
+
+			if (this.errorMessage == null) {
+				this.state.myParkingLocationReservations.remove(this.parkingLocation);
+				this.viewUpdater.update();
+
+				final Toast toast =
+						Toast.makeText(this.context,
+								R.string.parking_location_successfully_canceled,
+								Toast.LENGTH_SHORT);
+
+				toast.show();
+			} else {
+				final Toast toast =
+						Toast.makeText(this.context, this.errorMessage, Toast.LENGTH_SHORT);
+
+				toast.show();
+			}
+		}
+	}
+
+	private static final class CancelOnClickListener implements View.OnClickListener {
+		private final ParkingLocation parkingLocation;
+		private final State state;
+		private final ViewUpdater viewUpdater;
+
+		private CancelOnClickListener(final ParkingLocation parkingLocation,
+				final State state, final ViewUpdater viewUpdater) {
+			this.parkingLocation = parkingLocation;
+			this.state = state;
+			this.viewUpdater = viewUpdater;
+		}
+
+		@Override
+		public void onClick(final View view) {
+			final Context context = view.getContext();
+			final CancelAsyncTask cancelAsyncTask =
+					new CancelAsyncTask(context, this.parkingLocation, this.state,
+							this.viewUpdater);
+
+			cancelAsyncTask.execute();
+		}
+	}
+
 	private static final class ConnectionCallbacks implements GoogleApiClient.ConnectionCallbacks {
 		private final Context context;
 		private final FragmentManager fragmentManager;
 		private final State state;
 		private final ViewHolder viewHolder;
+		private final ViewUpdater viewUpdater;
 
 		private ConnectionCallbacks(final Context context, final FragmentManager fragmentManager,
-				final State state, final ViewHolder viewHolder) {
+				final State state, final ViewHolder viewHolder,
+				final ViewUpdater viewUpdater) {
 			this.context = context;
 			this.fragmentManager = fragmentManager;
 			this.state = state;
 			this.viewHolder = viewHolder;
+			this.viewUpdater = viewUpdater;
 		}
 
 		@Override
@@ -118,7 +205,7 @@ public class MapActivity extends FragmentActivity {
 					(SupportMapFragment) this.fragmentManager
 							.findFragmentById(R.id.map);
 			final OnMapReadyCallback onMapReadyCallback =
-					new OnMapReadyCallback(this.context, this.state, this.viewHolder);
+					new OnMapReadyCallback(this.context, this.state, this.viewUpdater);
 
 			supportMapFragment.getMapAsync(onMapReadyCallback);
 		}
@@ -139,13 +226,13 @@ public class MapActivity extends FragmentActivity {
 			com.google.android.gms.maps.OnMapReadyCallback {
 		private final Context context;
 		private final State state;
-		private final ViewHolder viewHolder;
+		private final ViewUpdater viewUpdater;
 
 		private OnMapReadyCallback(final Context context, final State state,
-				final ViewHolder viewHolder) {
+				final ViewUpdater viewUpdater) {
 			this.context = context;
 			this.state = state;
-			this.viewHolder = viewHolder;
+			this.viewUpdater = viewUpdater;
 		}
 
 		@Override
@@ -183,8 +270,8 @@ public class MapActivity extends FragmentActivity {
 
 					final ShowNearestParkingLocationsAsyncTask
 							showNearestParkingLocationsAsyncTask =
-							new ShowNearestParkingLocationsAsyncTask(context, latestLocation,
-									this.state, viewHolder);
+							new ShowNearestParkingLocationsAsyncTask(this.context, latestLocation,
+									this.state, this.viewUpdater);
 
 					showNearestParkingLocationsAsyncTask.execute();
 				}
@@ -197,15 +284,15 @@ public class MapActivity extends FragmentActivity {
 		private final Context context;
 		private final Location location;
 		private final State state;
-		private final ViewHolder viewHolder;
+		private final ViewUpdater viewUpdater;
 		private String errorMessage;
 
 		private ShowNearestParkingLocationsAsyncTask(final Context context, final Location location,
-				final State state, final ViewHolder viewHolder) {
+				final State state, final ViewUpdater viewUpdater) {
 			this.context = context;
 			this.location = location;
 			this.state = state;
-			this.viewHolder = viewHolder;
+			this.viewUpdater = viewUpdater;
 		}
 
 		@Override
@@ -259,7 +346,7 @@ public class MapActivity extends FragmentActivity {
 			}
 
 			final OnMarkerClickListener onMarkerClickListener =
-					new OnMarkerClickListener(this.context, this.state, this.viewHolder);
+					new OnMarkerClickListener(this.state, this.viewUpdater);
 
 			this.state.googleMap.setOnMarkerClickListener(
 					onMarkerClickListener);
@@ -267,74 +354,19 @@ public class MapActivity extends FragmentActivity {
 	}
 
 	private static final class OnMarkerClickListener implements GoogleMap.OnMarkerClickListener {
-		private final Context context;
 		private final State state;
-		private final ViewHolder viewHolder;
+		private final ViewUpdater viewUpdater;
 
-		private OnMarkerClickListener(final Context context, final State state,
-				final ViewHolder viewHolder) {
-			this.context = context;
+		private OnMarkerClickListener(final State state, final ViewUpdater viewUpdater) {
 			this.state = state;
-			this.viewHolder = viewHolder;
+			this.viewUpdater = viewUpdater;
 		}
 
 		@Override
 		public boolean onMarkerClick(final Marker marker) {
-			final ParkingLocation parkingLocation = this.state.markerParkingLocations.get(marker);
-			final String name = parkingLocation.getName();
+			this.state.selectedParkingLocation = this.state.markerParkingLocations.get(marker);
 
-			this.viewHolder.parkingLocationNameTextView.setText(name);
-
-			final BigDecimal costPerMinute = parkingLocation.getCostPerMinute();
-			final String costPerMinuteString = this.context
-					.getString(R.string.cost_per_minute, costPerMinute.toString());
-
-			this.viewHolder.parkingLocationCostPerMinuteTextView.setText(costPerMinuteString);
-
-			final boolean reserved = parkingLocation.getReserved();
-
-			if (reserved) {
-				this.viewHolder.alreadyReservedView.setVisibility(View.VISIBLE);
-				this.viewHolder.minutesLabelView.setVisibility(View.INVISIBLE);
-				this.viewHolder.reservationLengthEditText.setVisibility(View.INVISIBLE);
-				this.viewHolder.reservationLengthSeekBar.setVisibility(View.INVISIBLE);
-				this.viewHolder.reserveButton.setVisibility(View.INVISIBLE);
-			} else {
-				this.viewHolder.alreadyReservedView.setVisibility(View.INVISIBLE);
-				this.viewHolder.minutesLabelView.setVisibility(View.VISIBLE);
-				this.viewHolder.reservationLengthEditText.setVisibility(View.VISIBLE);
-
-				final int minReservationTimeInMinutes =
-						parkingLocation.getMinReservationTimeInMinutes();
-				final int progress = this.viewHolder.reservationLengthSeekBar.getProgress();
-				final int selectedReservationTimeInMinutes = minReservationTimeInMinutes +
-						progress;
-
-				this.viewHolder.reservationLengthEditText
-						.setText(String.valueOf(selectedReservationTimeInMinutes));
-				this.viewHolder.reservationLengthSeekBar.setVisibility(View.VISIBLE);
-
-				final Integer maxReservationTimeInMinutes =
-						parkingLocation.getMaxReservationTimeInMinutes();
-				final int seekBarMax = maxReservationTimeInMinutes - minReservationTimeInMinutes;
-
-				this.viewHolder.reservationLengthSeekBar.setMax(
-						seekBarMax);
-
-				final OnSeekBarChangeListener onSeekBarChangeListener =
-						new OnSeekBarChangeListener(parkingLocation, this.viewHolder);
-
-				this.viewHolder.reservationLengthSeekBar
-						.setOnSeekBarChangeListener(onSeekBarChangeListener);
-				this.viewHolder.reserveButton.setVisibility(View.VISIBLE);
-
-				final ReserveOnClickListener reserveOnClickListener =
-						new ReserveOnClickListener(parkingLocation, this.viewHolder);
-
-				this.viewHolder.reserveButton.setOnClickListener(reserveOnClickListener);
-			}
-
-			this.viewHolder.selectNearbyParkingLocationView.setVisibility(View.GONE);
+			this.viewUpdater.update();
 
 			return false;
 		}
@@ -372,19 +404,25 @@ public class MapActivity extends FragmentActivity {
 
 	private static final class ReserveOnClickListener implements View.OnClickListener {
 		private final ParkingLocation parkingLocation;
+		private final State state;
 		private final ViewHolder viewHolder;
+		private final ViewUpdater viewUpdater;
 
 		private ReserveOnClickListener(final ParkingLocation parkingLocation,
-				final ViewHolder viewHolder) {
+				final State state, final ViewHolder viewHolder,
+				final ViewUpdater viewUpdater) {
 			this.parkingLocation = parkingLocation;
+			this.state = state;
 			this.viewHolder = viewHolder;
+			this.viewUpdater = viewUpdater;
 		}
 
 		@Override
 		public void onClick(final View view) {
 			final Context context = view.getContext();
 			final ReserveAsyncTask reserveAsyncTask =
-					new ReserveAsyncTask(context, this.parkingLocation, this.viewHolder);
+					new ReserveAsyncTask(context, this.parkingLocation, this.state, this.viewHolder,
+							this.viewUpdater);
 
 			reserveAsyncTask.execute();
 		}
@@ -393,15 +431,20 @@ public class MapActivity extends FragmentActivity {
 	private static final class ReserveAsyncTask extends AsyncTask<Void, Void, Void> {
 		private final Context context;
 		private final ParkingLocation parkingLocation;
+		private final State state;
 		private final ViewHolder viewHolder;
+		private final ViewUpdater viewUpdater;
 		private String errorMessage;
 		private int reservationLength;
 
 		private ReserveAsyncTask(final Context context, final ParkingLocation parkingLocation,
-				final ViewHolder viewHolder) {
+				final State state, final ViewHolder viewHolder,
+				final ViewUpdater viewUpdater) {
 			this.context = context;
 			this.parkingLocation = parkingLocation;
+			this.state = state;
 			this.viewHolder = viewHolder;
+			this.viewUpdater = viewUpdater;
 		}
 
 		@Override
@@ -452,11 +495,9 @@ public class MapActivity extends FragmentActivity {
 			super.onPostExecute(result);
 
 			if (this.errorMessage == null) {
-				this.viewHolder.alreadyReservedView.setVisibility(View.VISIBLE);
-				this.viewHolder.minutesLabelView.setVisibility(View.INVISIBLE);
-				this.viewHolder.reserveButton.setVisibility(View.INVISIBLE);
-				this.viewHolder.reservationLengthEditText.setVisibility(View.INVISIBLE);
-				this.viewHolder.reservationLengthSeekBar.setVisibility(View.INVISIBLE);
+				this.state.myParkingLocationReservations.add(this.parkingLocation);
+
+				this.viewUpdater.update();
 
 				final Toast toast =
 						Toast.makeText(this.context,
@@ -477,11 +518,16 @@ public class MapActivity extends FragmentActivity {
 		public GoogleApiClient googleApiClient;
 		public GoogleMap googleMap;
 		public Map<Marker, ParkingLocation> markerParkingLocations = new HashMap<>();
+		public List<ParkingLocation> myParkingLocationReservations = new ArrayList<>();
+		public ParkingLocation selectedParkingLocation;
 	}
 
 	public static final class ViewHolder {
 		@BindView(R.id.already_reserved)
 		public View alreadyReservedView;
+
+		@BindView(R.id.cancel_reservation)
+		public Button cancelReservation;
 
 		@BindView(R.id.minutes_label)
 		public View minutesLabelView;
@@ -503,5 +549,120 @@ public class MapActivity extends FragmentActivity {
 
 		@BindView(R.id.select_nearby_parking_location)
 		public View selectNearbyParkingLocationView;
+
+		@BindView(R.id.successfully_reserved)
+		public View successfullyReservedView;
+	}
+
+	private static final class ViewUpdater {
+		private final Context context;
+		private final State state;
+		private final ViewHolder viewHolder;
+
+		private ViewUpdater(final Context context, final State state, final ViewHolder viewHolder) {
+			this.context = context;
+			this.state = state;
+			this.viewHolder = viewHolder;
+		}
+
+		public void prepare() {
+			this.viewHolder.alreadyReservedView.setVisibility(View.GONE);
+			this.viewHolder.cancelReservation.setVisibility(View.INVISIBLE);
+			this.viewHolder.minutesLabelView.setVisibility(View.INVISIBLE);
+			this.viewHolder.parkingLocationNameTextView.setText(null);
+			this.viewHolder.parkingLocationCostPerMinuteTextView.setText(null);
+			this.viewHolder.reservationLengthEditText.setVisibility(View.INVISIBLE);
+			this.viewHolder.reservationLengthSeekBar.setVisibility(View.INVISIBLE);
+			this.viewHolder.reserveButton.setVisibility(View.INVISIBLE);
+			this.viewHolder.selectNearbyParkingLocationView.setVisibility(View.VISIBLE);
+			this.viewHolder.successfullyReservedView.setVisibility(View.INVISIBLE);
+		}
+
+		public void update() {
+			if (this.state.selectedParkingLocation == null) {
+				this.prepare();
+			} else {
+				if (this.state.myParkingLocationReservations
+						.contains(this.state.selectedParkingLocation)) {
+					this.viewHolder.alreadyReservedView.setVisibility(View.GONE);
+
+					final CancelOnClickListener cancelOnClickListener = new CancelOnClickListener(
+							this.state.selectedParkingLocation, this.state, this);
+
+					this.viewHolder.cancelReservation.setOnClickListener(cancelOnClickListener);
+
+					this.viewHolder.cancelReservation.setVisibility(View.VISIBLE);
+					this.viewHolder.minutesLabelView.setVisibility(View.INVISIBLE);
+					this.viewHolder.reserveButton.setVisibility(View.INVISIBLE);
+					this.viewHolder.reservationLengthEditText.setVisibility(View.INVISIBLE);
+					this.viewHolder.reservationLengthSeekBar.setVisibility(View.INVISIBLE);
+					this.viewHolder.successfullyReservedView.setVisibility(View.VISIBLE);
+				} else {
+					this.viewHolder.cancelReservation.setVisibility(View.INVISIBLE);
+
+					final String name = this.state.selectedParkingLocation.getName();
+
+					this.viewHolder.parkingLocationNameTextView.setText(name);
+
+					final BigDecimal costPerMinute =
+							this.state.selectedParkingLocation.getCostPerMinute();
+					final String costPerMinuteString = this.context
+							.getString(R.string.cost_per_minute, costPerMinute.toString());
+
+					this.viewHolder.parkingLocationCostPerMinuteTextView
+							.setText(costPerMinuteString);
+
+					final boolean reserved = this.state.selectedParkingLocation.getReserved();
+
+					if (reserved) {
+						this.viewHolder.alreadyReservedView.setVisibility(View.VISIBLE);
+						this.viewHolder.minutesLabelView.setVisibility(View.INVISIBLE);
+						this.viewHolder.reservationLengthEditText.setVisibility(View.INVISIBLE);
+						this.viewHolder.reservationLengthSeekBar.setVisibility(View.INVISIBLE);
+						this.viewHolder.reserveButton.setVisibility(View.INVISIBLE);
+					} else {
+						this.viewHolder.alreadyReservedView.setVisibility(View.INVISIBLE);
+						this.viewHolder.minutesLabelView.setVisibility(View.VISIBLE);
+						this.viewHolder.reservationLengthEditText.setVisibility(View.VISIBLE);
+
+						final int minReservationTimeInMinutes =
+								this.state.selectedParkingLocation.getMinReservationTimeInMinutes();
+						final int progress = this.viewHolder.reservationLengthSeekBar.getProgress();
+						final int selectedReservationTimeInMinutes = minReservationTimeInMinutes +
+								progress;
+
+						this.viewHolder.reservationLengthEditText
+								.setText(String.valueOf(selectedReservationTimeInMinutes));
+						this.viewHolder.reservationLengthSeekBar.setVisibility(View.VISIBLE);
+
+						final Integer maxReservationTimeInMinutes =
+								this.state.selectedParkingLocation.getMaxReservationTimeInMinutes();
+						final int seekBarMax =
+								maxReservationTimeInMinutes - minReservationTimeInMinutes;
+
+						this.viewHolder.reservationLengthSeekBar.setMax(
+								seekBarMax);
+
+						final OnSeekBarChangeListener onSeekBarChangeListener =
+								new OnSeekBarChangeListener(this.state.selectedParkingLocation,
+										this.viewHolder);
+
+						this.viewHolder.reservationLengthSeekBar
+								.setOnSeekBarChangeListener(onSeekBarChangeListener);
+						this.viewHolder.reserveButton.setVisibility(View.VISIBLE);
+
+						final ReserveOnClickListener reserveOnClickListener =
+								new ReserveOnClickListener(this.state.selectedParkingLocation,
+										this.state, this.viewHolder,
+										this);
+
+						this.viewHolder.reserveButton.setOnClickListener(reserveOnClickListener);
+					}
+
+					this.viewHolder.selectNearbyParkingLocationView.setVisibility(View.GONE);
+					this.viewHolder.successfullyReservedView.setVisibility(View.GONE);
+				}
+			}
+		}
 	}
 }

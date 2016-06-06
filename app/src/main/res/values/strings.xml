@@ -1,15 +1,20 @@
 <resources>
 	<string name="already_reserved">Already reserved</string>
 	<string name="app_name">Got That Spot</string>
+	<string name="cancel_reservation">Cancel</string>
 	<string name="cost_per_minute">$%1$s/minute</string>
+	<string name="failed_to_cancel_parking_location">Failed to cancel parking location with ID "%1$d".</string>
 	<string name="failed_to_retrieve_latest_location">Failed to retrieve latest location.</string>
 	<string name="failed_to_reserve_parking_location">Failed to reserve parking location with ID "%1$d".</string>
 	<string name="minutes">mins</string>
 	<string name="no_parking_locations_found_nearby">No parking locations found nearby.</string>
+	<string name="parking_location_successfully_canceled">Parking location successfully canceled.</string>
 	<string name="parking_location_successfully_reserved">Parking location successfully reserved.</string>
 	<string name="select_nearby_parking_location">Select a nearby parking location</string>
+	<string name="successfully_reserved">Successfully reserved</string>
 	<string name="reserve">Reserve</string>
 	<string name="title_activity_map">Map</string>
+	<string name="unable_to_cancel_parking_location_x">Unable to cancel parking location "%1$s".</string>
 	<string name="unable_to_reserve_parking_location_x">Unable to reserve parking location "%1$s".</string>
 	<string name="unable_to_retrieve_nearest_parking_locations">Unable to retrieve nearest parking locations.</string>
 </resources>
