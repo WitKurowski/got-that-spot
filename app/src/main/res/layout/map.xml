@@ -20,6 +20,13 @@
 			android:layout_alignParentBottom="true"
 			android:padding="10dp">
 
+		<TextView
+				android:id="@+id/select_nearby_parking_location"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_centerInParent="true"
+				android:text="@string/select_nearby_parking_location" />
+
 		<LinearLayout
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
@@ -57,8 +64,8 @@
 				<SeekBar
 						android:id="@+id/reservation_length_slider"
 						android:layout_height="wrap_content"
-						android:layout_gravity="center"
-						android:layout_width="100dp" />
+						android:layout_width="100dp"
+						android:layout_gravity="center" />
 
 				<EditText
 						android:id="@+id/reservation_length"

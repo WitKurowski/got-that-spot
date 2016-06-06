@@ -58,6 +58,7 @@ public class MapActivity extends FragmentActivity {
 		this.viewHolder.reservationLengthEditText.setVisibility(View.INVISIBLE);
 		this.viewHolder.reservationLengthSeekBar.setVisibility(View.INVISIBLE);
 		this.viewHolder.reserveButton.setVisibility(View.INVISIBLE);
+		this.viewHolder.selectNearbyParkingLocationView.setVisibility(View.VISIBLE);
 
 		this.setupGoogleApiClient();
 	}
@@ -104,6 +105,8 @@ public class MapActivity extends FragmentActivity {
 		this.viewHolder.reservationLengthSeekBar =
 				(SeekBar) this.findViewById(R.id.reservation_length_slider);
 		this.viewHolder.reserveButton = (Button) this.findViewById(R.id.reserve);
+		this.viewHolder.selectNearbyParkingLocationView =
+				this.findViewById(R.id.select_nearby_parking_location);
 	}
 
 	private static final class ConnectionCallbacks implements GoogleApiClient.ConnectionCallbacks {
@@ -342,6 +345,8 @@ public class MapActivity extends FragmentActivity {
 				this.viewHolder.reserveButton.setOnClickListener(reserveOnClickListener);
 			}
 
+			this.viewHolder.selectNearbyParkingLocationView.setVisibility(View.GONE);
+
 			return false;
 		}
 	}
@@ -493,5 +498,6 @@ public class MapActivity extends FragmentActivity {
 		public EditText reservationLengthEditText;
 		public SeekBar reservationLengthSeekBar;
 		public Button reserveButton;
+		public View selectNearbyParkingLocationView;
 	}
 }
