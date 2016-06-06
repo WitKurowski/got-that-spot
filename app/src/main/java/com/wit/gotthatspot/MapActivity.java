@@ -11,6 +11,9 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -385,12 +388,25 @@ public class MapActivity extends FragmentActivity {
 		@Override
 		public void onProgressChanged(final SeekBar seekBar, final int progress,
 				final boolean fromUser) {
-			final Integer minReservationTimeInMinutes =
-					this.parkingLocation.getMinReservationTimeInMinutes();
-			final int reservationLength = progress +
-					minReservationTimeInMinutes;
+			if (fromUser) {
+				final String currentlyInputReservationLength =
+						this.viewHolder.reservationLengthEditText.getText().toString();
+				final int minReservationTimeInMinutes =
+						this.parkingLocation.getMinReservationTimeInMinutes();
+				final int reservationLength = progress + minReservationTimeInMinutes;
 
-			this.viewHolder.reservationLengthEditText.setText(String.valueOf(reservationLength));
+				if (currentlyInputReservationLength.length() == 0 ||
+						Integer.parseInt(currentlyInputReservationLength) != reservationLength) {
+					this.viewHolder.reservationLengthEditText
+							.setText(String.valueOf(reservationLength));
+
+					final int numberOfReservationLengthDigits =
+							String.valueOf(reservationLength).length();
+
+					this.viewHolder.reservationLengthEditText
+							.setSelection(numberOfReservationLengthDigits);
+				}
+			}
 		}
 
 		@Override
@@ -399,6 +415,50 @@ public class MapActivity extends FragmentActivity {
 
 		@Override
 		public void onStopTrackingTouch(final SeekBar seekBar) {
+		}
+	}
+
+	private static final class ReservationLengthInputTextWatcher implements TextWatcher {
+		private final State state;
+		private final ViewHolder viewHolder;
+
+		private ReservationLengthInputTextWatcher(final State state,
+				final ViewHolder viewHolder) {
+			this.state = state;
+			this.viewHolder = viewHolder;
+		}
+
+		@Override
+		public void beforeTextChanged(final CharSequence s, final int start, final int count,
+				final int after) {
+		}
+
+		@Override
+		public void onTextChanged(final CharSequence s, final int start, final int before,
+				final int count) {
+		}
+
+		@Override
+		public void afterTextChanged(final Editable s) {
+			final String reservationLengthString = s.toString();
+
+			if (reservationLengthString.length() == 0) {
+				this.viewHolder.reservationLengthSeekBar.setProgress(0);
+			} else {
+				final int maxReservationTimeInMinutes =
+						this.state.selectedParkingLocation.getMaxReservationTimeInMinutes();
+				final int reservationLength = Integer.parseInt(reservationLengthString);
+				final int minReservationTimeInMinutes =
+						this.state.selectedParkingLocation.getMinReservationTimeInMinutes();
+				final int newReservationLength = Math.max(minReservationTimeInMinutes,
+						Math.min(maxReservationTimeInMinutes, reservationLength));
+				final int newProgress = newReservationLength - minReservationTimeInMinutes;
+				final int currentProgress = this.viewHolder.reservationLengthSeekBar.getProgress();
+
+				if (currentProgress != newProgress) {
+					this.viewHolder.reservationLengthSeekBar.setProgress(newProgress);
+				}
+			}
 		}
 	}
 
@@ -576,6 +636,12 @@ public class MapActivity extends FragmentActivity {
 			this.viewHolder.reserveButton.setVisibility(View.INVISIBLE);
 			this.viewHolder.selectNearbyParkingLocationView.setVisibility(View.VISIBLE);
 			this.viewHolder.successfullyReservedView.setVisibility(View.INVISIBLE);
+
+			final ReservationLengthInputTextWatcher reservationLengthInputTextWatcher =
+					new ReservationLengthInputTextWatcher(this.state, this.viewHolder);
+
+			this.viewHolder.reservationLengthEditText
+					.addTextChangedListener(reservationLengthInputTextWatcher);
 		}
 
 		public void update() {
@@ -627,21 +693,28 @@ public class MapActivity extends FragmentActivity {
 
 						final int minReservationTimeInMinutes =
 								this.state.selectedParkingLocation.getMinReservationTimeInMinutes();
-						final int progress = this.viewHolder.reservationLengthSeekBar.getProgress();
-						final int selectedReservationTimeInMinutes = minReservationTimeInMinutes +
-								progress;
 
-						this.viewHolder.reservationLengthEditText
-								.setText(String.valueOf(selectedReservationTimeInMinutes));
+						if (this.viewHolder.reservationLengthEditText.getText().length() == 0) {
+							this.viewHolder.reservationLengthEditText
+									.setText(String.valueOf(minReservationTimeInMinutes));
+						}
+
+						final int maxReservationTimeInMinutes =
+								this.state.selectedParkingLocation.getMaxReservationTimeInMinutes();
+						final int maxNumberOfReservationTimeDigits =
+								String.valueOf(maxReservationTimeInMinutes).length();
+						final InputFilter[] inputFilters = new InputFilter[1];
+
+						inputFilters[0] =
+								new InputFilter.LengthFilter(maxNumberOfReservationTimeDigits);
+
+						this.viewHolder.reservationLengthEditText.setFilters(inputFilters);
 						this.viewHolder.reservationLengthSeekBar.setVisibility(View.VISIBLE);
 
-						final Integer maxReservationTimeInMinutes =
-								this.state.selectedParkingLocation.getMaxReservationTimeInMinutes();
 						final int seekBarMax =
 								maxReservationTimeInMinutes - minReservationTimeInMinutes;
 
-						this.viewHolder.reservationLengthSeekBar.setMax(
-								seekBarMax);
+						this.viewHolder.reservationLengthSeekBar.setMax(seekBarMax);
 
 						final OnSeekBarChangeListener onSeekBarChangeListener =
 								new OnSeekBarChangeListener(this.state.selectedParkingLocation,
