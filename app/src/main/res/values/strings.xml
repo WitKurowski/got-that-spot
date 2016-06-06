@@ -4,6 +4,7 @@
 	<string name="cost_per_minute">$%1$s/minute</string>
 	<string name="failed_to_retrieve_latest_location">Failed to retrieve latest location.</string>
 	<string name="failed_to_reserve_parking_location">Failed to reserve parking location with ID "%1$d".</string>
+	<string name="minutes">mins</string>
 	<string name="no_parking_locations_found_nearby">No parking locations found nearby.</string>
 	<string name="parking_location_successfully_reserved">Parking location successfully reserved.</string>
 	<string name="reserve">Reserve</string>

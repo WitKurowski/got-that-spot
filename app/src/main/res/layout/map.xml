@@ -3,6 +3,7 @@
 		xmlns:tools="http://schemas.android.com/tools"
 		android:layout_height="match_parent"
 		android:layout_width="match_parent"
+		android:focusableInTouchMode="true"
 		tools:context="com.wit.gotthatspot.MapActivity">
 
 	<fragment
@@ -41,13 +42,44 @@
 					android:text="@string/sample_text" />
 		</LinearLayout>
 
-		<Button
-				android:id="@+id/reserve"
+		<LinearLayout
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:layout_alignParentRight="true"
 				android:layout_centerVertical="true"
-				android:text="@string/reserve" />
+				android:orientation="vertical">
+
+			<LinearLayout
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:orientation="horizontal">
+
+				<SeekBar
+						android:id="@+id/reservation_length_slider"
+						android:layout_height="wrap_content"
+						android:layout_gravity="center"
+						android:layout_width="100dp" />
+
+				<EditText
+						android:id="@+id/reservation_length"
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:inputType="number" />
+
+				<TextView
+						android:id="@+id/minutes_label"
+						android:layout_height="wrap_content"
+						android:layout_width="wrap_content"
+						android:text="@string/minutes" />
+			</LinearLayout>
+
+			<Button
+					android:id="@+id/reserve"
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:layout_gravity="center"
+					android:text="@string/reserve" />
+		</LinearLayout>
 
 		<TextView
 				android:id="@+id/already_reserved"
