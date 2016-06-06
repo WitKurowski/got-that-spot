@@ -30,6 +30,9 @@
 		<LinearLayout
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
+				android:layout_alignParentLeft="true"
+				android:layout_toLeftOf="@+id/reservation_options"
+				android:layout_toStartOf="@id/reservation_options"
 				android:layout_centerVertical="true"
 				android:orientation="vertical">
 
@@ -45,14 +48,15 @@
 					android:id="@+id/cost_per_minute"
 					android:layout_height="wrap_content"
 					android:layout_width="wrap_content"
-					android:layout_below="@id/name"
 					android:text="@string/sample_text" />
 		</LinearLayout>
 
 		<LinearLayout
+				android:id="@id/reservation_options"
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:layout_alignParentRight="true"
+				android:layout_alignParentEnd="true"
 				android:layout_centerVertical="true"
 				android:orientation="vertical">
 
@@ -93,6 +97,7 @@
 				android:layout_height="wrap_content"
 				android:layout_width="wrap_content"
 				android:layout_alignParentRight="true"
+				android:layout_alignParentEnd="true"
 				android:layout_centerVertical="true"
 				android:gravity="center"
 				android:text="@string/already_reserved"
