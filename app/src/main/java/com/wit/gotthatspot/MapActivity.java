@@ -39,6 +39,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 public class MapActivity extends FragmentActivity {
 	private static final float INITIAL_ZOOM = 15.0f;
 	private final State state = new State();
@@ -49,7 +52,8 @@ public class MapActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 
 		this.setContentView(R.layout.map);
-		this.setupViewHolder();
+
+		ButterKnife.bind(this.viewHolder, this);
 
 		this.viewHolder.alreadyReservedView.setVisibility(View.INVISIBLE);
 		this.viewHolder.minutesLabelView.setVisibility(View.INVISIBLE);
@@ -92,21 +96,6 @@ public class MapActivity extends FragmentActivity {
 		googleApiClientBuilder.addApi(LocationServices.API);
 
 		this.state.googleApiClient = googleApiClientBuilder.build();
-	}
-
-	private void setupViewHolder() {
-		this.viewHolder.alreadyReservedView = this.findViewById(R.id.already_reserved);
-		this.viewHolder.minutesLabelView = this.findViewById(R.id.minutes_label);
-		this.viewHolder.parkingLocationNameTextView = (TextView) this.findViewById(R.id.name);
-		this.viewHolder.parkingLocationCostPerMinuteTextView =
-				(TextView) this.findViewById(R.id.cost_per_minute);
-		this.viewHolder.reservationLengthEditText =
-				(EditText) this.findViewById(R.id.reservation_length);
-		this.viewHolder.reservationLengthSeekBar =
-				(SeekBar) this.findViewById(R.id.reservation_length_slider);
-		this.viewHolder.reserveButton = (Button) this.findViewById(R.id.reserve);
-		this.viewHolder.selectNearbyParkingLocationView =
-				this.findViewById(R.id.select_nearby_parking_location);
 	}
 
 	private static final class ConnectionCallbacks implements GoogleApiClient.ConnectionCallbacks {
@@ -490,14 +479,29 @@ public class MapActivity extends FragmentActivity {
 		public Map<Marker, ParkingLocation> markerParkingLocations = new HashMap<>();
 	}
 
-	private static final class ViewHolder {
+	public static final class ViewHolder {
+		@BindView(R.id.already_reserved)
 		public View alreadyReservedView;
+
+		@BindView(R.id.minutes_label)
 		public View minutesLabelView;
+
+		@BindView(R.id.name)
 		public TextView parkingLocationNameTextView;
+
+		@BindView(R.id.cost_per_minute)
 		public TextView parkingLocationCostPerMinuteTextView;
+
+		@BindView(R.id.reservation_length)
 		public EditText reservationLengthEditText;
+
+		@BindView(R.id.reservation_length_slider)
 		public SeekBar reservationLengthSeekBar;
+
+		@BindView(R.id.reserve)
 		public Button reserveButton;
+
+		@BindView(R.id.select_nearby_parking_location)
 		public View selectNearbyParkingLocationView;
 	}
 }
