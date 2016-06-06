@@ -18,6 +18,7 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public class ParkingLocationManager {
+	private static final String BASE_URL = "http://ridecellparking.herokuapp.com";
 	private static final ParkingLocationManager PARKING_LOCATION_MANAGER =
 			new ParkingLocationManager();
 	private final ParkingSpotRetrofitManager parkingSpotRetrofitManager;
@@ -29,7 +30,7 @@ public class ParkingLocationManager {
 	private ParkingLocationManager() {
 		final Retrofit.Builder retrofitBuilder = new Retrofit.Builder();
 
-		retrofitBuilder.baseUrl("http://ridecellparking.herokuapp.com");
+		retrofitBuilder.baseUrl(ParkingLocationManager.BASE_URL);
 		retrofitBuilder.addConverterFactory(GsonConverterFactory.create());
 
 		final Retrofit retrofit = retrofitBuilder.build();
