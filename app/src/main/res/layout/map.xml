@@ -1,8 +1,62 @@
-<fragment android:id="@+id/map"
-		android:name="com.google.android.gms.maps.SupportMapFragment"
-		xmlns:android="http://schemas.android.com/apk/res/android"
-		xmlns:map="http://schemas.android.com/apk/res-auto"
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 		xmlns:tools="http://schemas.android.com/tools"
 		android:layout_height="match_parent"
 		android:layout_width="match_parent"
-		tools:context="com.wit.gotthatspot.MapActivity" />
+		tools:context="com.wit.gotthatspot.MapActivity">
+
+	<fragment
+			android:id="@+id/map"
+			android:name="com.google.android.gms.maps.SupportMapFragment"
+			android:layout_height="match_parent"
+			android:layout_width="match_parent"
+			android:layout_above="@+id/parking_location_info" />
+
+	<RelativeLayout
+			android:id="@id/parking_location_info"
+			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_alignParentBottom="true"
+			android:padding="10dp">
+
+		<LinearLayout
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_centerVertical="true"
+				android:orientation="vertical">
+
+			<TextView
+					android:id="@+id/name"
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:text="@string/sample_text"
+					android:textColor="@android:color/black"
+					android:textStyle="bold" />
+
+			<TextView
+					android:id="@+id/cost_per_minute"
+					android:layout_height="wrap_content"
+					android:layout_width="wrap_content"
+					android:layout_below="@id/name"
+					android:text="@string/sample_text" />
+		</LinearLayout>
+
+		<Button
+				android:id="@+id/reserve"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_alignParentRight="true"
+				android:layout_centerVertical="true"
+				android:text="@string/reserve" />
+
+		<TextView
+				android:id="@+id/already_reserved"
+				android:layout_height="wrap_content"
+				android:layout_width="wrap_content"
+				android:layout_alignParentRight="true"
+				android:layout_centerVertical="true"
+				android:gravity="center"
+				android:text="@string/already_reserved"
+				android:textColor="@color/already_reserved" />
+	</RelativeLayout>
+</RelativeLayout>

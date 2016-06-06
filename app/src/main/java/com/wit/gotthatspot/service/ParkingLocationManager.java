@@ -13,6 +13,8 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
+import retrofit2.http.POST;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 public class ParkingLocationManager {
@@ -55,9 +57,32 @@ public class ParkingLocationManager {
 		return parkingLocations;
 	}
 
+	public ParkingLocation reserve(final ParkingLocation parkingLocation, final int numberOfMinutes)
+			throws IOException, ServerException {
+		final long id = parkingLocation.getId();
+		final Call<ParkingLocation> call =
+				this.parkingSpotRetrofitManager.reserve(id, numberOfMinutes);
+		final Response<ParkingLocation> response = call.execute();
+		final boolean successful = response.isSuccessful();
+		final ParkingLocation updatedParkingLocation;
+
+		if (successful) {
+			updatedParkingLocation = response.body();
+		} else {
+			final String message = response.message();
+
+			throw new ServerException(message);
+		}
+
+		return updatedParkingLocation;
+	}
+
 	private interface ParkingSpotRetrofitManager {
 		@GET("/api/v1/parkinglocations/search")
 		Call<List<ParkingLocation>> get(@Query("lat") double latitude,
 				@Query("lng") double longitude);
+
+		@POST("/api/v1/parkinglocations/{id}/reserve/")
+		Call<ParkingLocation> reserve(@Path("id") long id, @Query("minutes") int numberOfMinutes);
 	}
 }

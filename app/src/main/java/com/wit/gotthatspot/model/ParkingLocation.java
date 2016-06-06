@@ -68,4 +68,12 @@ public class ParkingLocation {
 	public Date getReservedUntil() {
 		return this.reservedUntil;
 	}
+
+	public void setReserved(final Boolean reserved) {
+		this.reserved = reserved;
+	}
+
+	public void setReservedUntil(final Date reservedUntil) {
+		this.reservedUntil = reservedUntil;
+	}
 }
