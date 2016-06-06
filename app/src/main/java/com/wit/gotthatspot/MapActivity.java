@@ -445,18 +445,21 @@ public class MapActivity extends FragmentActivity {
 			if (reservationLengthString.length() == 0) {
 				this.viewHolder.reservationLengthSeekBar.setProgress(0);
 			} else {
-				final int maxReservationTimeInMinutes =
-						this.state.selectedParkingLocation.getMaxReservationTimeInMinutes();
-				final int reservationLength = Integer.parseInt(reservationLengthString);
-				final int minReservationTimeInMinutes =
-						this.state.selectedParkingLocation.getMinReservationTimeInMinutes();
-				final int newReservationLength = Math.max(minReservationTimeInMinutes,
-						Math.min(maxReservationTimeInMinutes, reservationLength));
-				final int newProgress = newReservationLength - minReservationTimeInMinutes;
-				final int currentProgress = this.viewHolder.reservationLengthSeekBar.getProgress();
+				if (this.state.selectedParkingLocation != null) {
+					final int maxReservationTimeInMinutes =
+							this.state.selectedParkingLocation.getMaxReservationTimeInMinutes();
+					final int reservationLength = Integer.parseInt(reservationLengthString);
+					final int minReservationTimeInMinutes =
+							this.state.selectedParkingLocation.getMinReservationTimeInMinutes();
+					final int newReservationLength = Math.max(minReservationTimeInMinutes,
+							Math.min(maxReservationTimeInMinutes, reservationLength));
+					final int newProgress = newReservationLength - minReservationTimeInMinutes;
+					final int currentProgress =
+							this.viewHolder.reservationLengthSeekBar.getProgress();
 
-				if (currentProgress != newProgress) {
-					this.viewHolder.reservationLengthSeekBar.setProgress(newProgress);
+					if (currentProgress != newProgress) {
+						this.viewHolder.reservationLengthSeekBar.setProgress(newProgress);
+					}
 				}
 			}
 		}
