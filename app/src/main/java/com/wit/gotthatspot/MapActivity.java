@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -28,6 +29,7 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -218,6 +220,33 @@ public class MapActivity extends FragmentActivity {
 		}
 	}
 
+	private static final class OnCameraChangeListener implements GoogleMap.OnCameraChangeListener {
+		private final Context context;
+		private final State state;
+		private final ViewUpdater viewUpdater;
+
+		private OnCameraChangeListener(Context context, State state, ViewUpdater viewUpdater) {
+			this.context = context;
+			this.state = state;
+			this.viewUpdater = viewUpdater;
+		}
+
+		@Override
+		public void onCameraChange(final CameraPosition cameraPosition) {
+			final Location cameraCenterLocation = new Location(LocationManager.GPS_PROVIDER);
+
+			cameraCenterLocation.setLatitude(cameraPosition.target.latitude);
+			cameraCenterLocation.setLongitude(cameraPosition.target.longitude);
+
+			final ShowNearestParkingLocationsAsyncTask
+					showNearestParkingLocationsAsyncTask =
+					new ShowNearestParkingLocationsAsyncTask(this.context, cameraCenterLocation,
+							this.state, this.viewUpdater);
+
+			showNearestParkingLocationsAsyncTask.execute();
+		}
+	}
+
 	private static final class OnConnectionFailedListener
 			implements GoogleApiClient.OnConnectionFailedListener {
 		@Override
@@ -277,6 +306,11 @@ public class MapActivity extends FragmentActivity {
 									this.state, this.viewUpdater);
 
 					showNearestParkingLocationsAsyncTask.execute();
+
+					final GoogleMap.OnCameraChangeListener onCameraChangeListener =
+							new OnCameraChangeListener(context, state, viewUpdater);
+
+					googleMap.setOnCameraChangeListener(onCameraChangeListener);
 				}
 			}
 		}
