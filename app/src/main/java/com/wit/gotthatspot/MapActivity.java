@@ -316,80 +316,6 @@ public class MapActivity extends FragmentActivity {
 		}
 	}
 
-	private static final class ShowNearestParkingLocationsAsyncTask
-			extends AsyncTask<Void, Void, List<ParkingLocation>> {
-		private final Context context;
-		private final Location location;
-		private final State state;
-		private final ViewUpdater viewUpdater;
-		private String errorMessage;
-
-		private ShowNearestParkingLocationsAsyncTask(final Context context, final Location location,
-				final State state, final ViewUpdater viewUpdater) {
-			this.context = context;
-			this.location = location;
-			this.state = state;
-			this.viewUpdater = viewUpdater;
-		}
-
-		@Override
-		protected List<ParkingLocation> doInBackground(final Void... params) {
-			final ParkingLocationManager parkingLocationManager =
-					ParkingLocationManager.getInstance();
-			List<ParkingLocation> parkingLocations = null;
-
-			try {
-				parkingLocations = parkingLocationManager.get(this.location);
-			} catch (final IOException ioException) {
-				ioException.printStackTrace();
-
-				this.errorMessage = this.context
-						.getString(R.string.unable_to_retrieve_nearest_parking_locations);
-			} catch (final ServerException serverException) {
-				serverException.printStackTrace();
-
-				this.errorMessage =
-						this.context.getString(R.string.no_parking_locations_found_nearby);
-			}
-
-			return parkingLocations;
-		}
-
-		@Override
-		protected void onPostExecute(final List<ParkingLocation> parkingLocations) {
-			super.onPostExecute(parkingLocations);
-
-			if (this.errorMessage == null) {
-				this.state.googleMap.clear();
-				this.state.markerParkingLocations.clear();
-
-				for (final ParkingLocation parkingLocation : parkingLocations) {
-					final MarkerOptions markerOptions = new MarkerOptions();
-					final double latitude = parkingLocation.getLatitude();
-					final double longitude = parkingLocation.getLongitude();
-					final LatLng latLng = new LatLng(latitude, longitude);
-
-					markerOptions.position(latLng);
-
-					final Marker marker = this.state.googleMap.addMarker(markerOptions);
-
-					this.state.markerParkingLocations.put(marker, parkingLocation);
-				}
-			} else {
-				final Toast toast =
-						Toast.makeText(this.context, this.errorMessage, Toast.LENGTH_SHORT);
-
-				toast.show();
-			}
-
-			final OnMarkerClickListener onMarkerClickListener =
-					new OnMarkerClickListener(this.state, this.viewUpdater);
-
-			this.state.googleMap.setOnMarkerClickListener(
-					onMarkerClickListener);
-		}
-	}
-
 	private static final class OnMarkerClickListener implements GoogleMap.OnMarkerClickListener {
 		private final State state;
 		private final ViewUpdater viewUpdater;
@@ -499,59 +425,6 @@ public class MapActivity extends FragmentActivity {
 		}
 	}
 
-	private static final class ReserveOnClickListener implements View.OnClickListener {
-		private final ParkingLocation parkingLocation;
-		private final State state;
-		private final ViewHolder viewHolder;
-		private final ViewUpdater viewUpdater;
-
-		private ReserveOnClickListener(final ParkingLocation parkingLocation,
-				final State state, final ViewHolder viewHolder,
-				final ViewUpdater viewUpdater) {
-			this.parkingLocation = parkingLocation;
-			this.state = state;
-			this.viewHolder = viewHolder;
-			this.viewUpdater = viewUpdater;
-		}
-
-		@Override
-		public void onClick(final View view) {
-			final String reservationLengthString =
-					this.viewHolder.reservationLengthEditText.getText().toString();
-			final Context context = view.getContext();
-
-			if (reservationLengthString.length() == 0) {
-				final Toast toast =
-						Toast.makeText(context, R.string.no_reservation_length_specified,
-								Toast.LENGTH_SHORT);
-
-				toast.show();
-			} else {
-				final int reservationLength = Integer.parseInt(reservationLengthString);
-				final int minReservationTimeInMinutes =
-						this.parkingLocation.getMinReservationTimeInMinutes();
-				final int maxReservationTimeInMinutes =
-						this.parkingLocation.getMaxReservationTimeInMinutes();
-
-				if (reservationLength >= minReservationTimeInMinutes &&
-						reservationLength <= maxReservationTimeInMinutes) {
-					final ReserveAsyncTask reserveAsyncTask =
-							new ReserveAsyncTask(context, this.parkingLocation, this.state,
-									this.viewHolder, this.viewUpdater);
-
-					reserveAsyncTask.execute();
-				} else {
-					final String message =
-							context.getString(R.string.reservation_length_must_be_between_x_and_y,
-									minReservationTimeInMinutes, maxReservationTimeInMinutes);
-					final Toast toast = Toast.makeText(context, message, Toast.LENGTH_SHORT);
-
-					toast.show();
-				}
-			}
-		}
-	}
-
 	private static final class ReserveAsyncTask extends AsyncTask<Void, Void, Void> {
 		private final Context context;
 		private final ParkingLocation parkingLocation;
@@ -635,6 +508,133 @@ public class MapActivity extends FragmentActivity {
 
 				toast.show();
 			}
+		}
+	}
+
+	private static final class ReserveOnClickListener implements View.OnClickListener {
+		private final ParkingLocation parkingLocation;
+		private final State state;
+		private final ViewHolder viewHolder;
+		private final ViewUpdater viewUpdater;
+
+		private ReserveOnClickListener(final ParkingLocation parkingLocation,
+				final State state, final ViewHolder viewHolder,
+				final ViewUpdater viewUpdater) {
+			this.parkingLocation = parkingLocation;
+			this.state = state;
+			this.viewHolder = viewHolder;
+			this.viewUpdater = viewUpdater;
+		}
+
+		@Override
+		public void onClick(final View view) {
+			final String reservationLengthString =
+					this.viewHolder.reservationLengthEditText.getText().toString();
+			final Context context = view.getContext();
+
+			if (reservationLengthString.length() == 0) {
+				final Toast toast =
+						Toast.makeText(context, R.string.no_reservation_length_specified,
+								Toast.LENGTH_SHORT);
+
+				toast.show();
+			} else {
+				final int reservationLength = Integer.parseInt(reservationLengthString);
+				final int minReservationTimeInMinutes =
+						this.parkingLocation.getMinReservationTimeInMinutes();
+				final int maxReservationTimeInMinutes =
+						this.parkingLocation.getMaxReservationTimeInMinutes();
+
+				if (reservationLength >= minReservationTimeInMinutes &&
+						reservationLength <= maxReservationTimeInMinutes) {
+					final ReserveAsyncTask reserveAsyncTask =
+							new ReserveAsyncTask(context, this.parkingLocation, this.state,
+									this.viewHolder, this.viewUpdater);
+
+					reserveAsyncTask.execute();
+				} else {
+					final String message =
+							context.getString(R.string.reservation_length_must_be_between_x_and_y,
+									minReservationTimeInMinutes, maxReservationTimeInMinutes);
+					final Toast toast = Toast.makeText(context, message, Toast.LENGTH_SHORT);
+
+					toast.show();
+				}
+			}
+		}
+	}
+
+	private static final class ShowNearestParkingLocationsAsyncTask
+			extends AsyncTask<Void, Void, List<ParkingLocation>> {
+		private final Context context;
+		private final Location location;
+		private final State state;
+		private final ViewUpdater viewUpdater;
+		private String errorMessage;
+
+		private ShowNearestParkingLocationsAsyncTask(final Context context, final Location location,
+				final State state, final ViewUpdater viewUpdater) {
+			this.context = context;
+			this.location = location;
+			this.state = state;
+			this.viewUpdater = viewUpdater;
+		}
+
+		@Override
+		protected List<ParkingLocation> doInBackground(final Void... params) {
+			final ParkingLocationManager parkingLocationManager =
+					ParkingLocationManager.getInstance();
+			List<ParkingLocation> parkingLocations = null;
+
+			try {
+				parkingLocations = parkingLocationManager.get(this.location);
+			} catch (final IOException ioException) {
+				ioException.printStackTrace();
+
+				this.errorMessage = this.context
+						.getString(R.string.unable_to_retrieve_nearest_parking_locations);
+			} catch (final ServerException serverException) {
+				serverException.printStackTrace();
+
+				this.errorMessage =
+						this.context.getString(R.string.no_parking_locations_found_nearby);
+			}
+
+			return parkingLocations;
+		}
+
+		@Override
+		protected void onPostExecute(final List<ParkingLocation> parkingLocations) {
+			super.onPostExecute(parkingLocations);
+
+			if (this.errorMessage == null) {
+				this.state.googleMap.clear();
+				this.state.markerParkingLocations.clear();
+
+				for (final ParkingLocation parkingLocation : parkingLocations) {
+					final MarkerOptions markerOptions = new MarkerOptions();
+					final double latitude = parkingLocation.getLatitude();
+					final double longitude = parkingLocation.getLongitude();
+					final LatLng latLng = new LatLng(latitude, longitude);
+
+					markerOptions.position(latLng);
+
+					final Marker marker = this.state.googleMap.addMarker(markerOptions);
+
+					this.state.markerParkingLocations.put(marker, parkingLocation);
+				}
+			} else {
+				final Toast toast =
+						Toast.makeText(this.context, this.errorMessage, Toast.LENGTH_SHORT);
+
+				toast.show();
+			}
+
+			final OnMarkerClickListener onMarkerClickListener =
+					new OnMarkerClickListener(this.state, this.viewUpdater);
+
+			this.state.googleMap.setOnMarkerClickListener(
+					onMarkerClickListener);
 		}
 	}
 
