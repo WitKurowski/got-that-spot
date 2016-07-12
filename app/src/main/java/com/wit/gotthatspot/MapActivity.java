@@ -44,6 +44,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -331,7 +332,19 @@ public class MapActivity extends FragmentActivity {
 
 			this.viewUpdater.update();
 
+			this.resetAllMarkersAlpha();
+
+			marker.setAlpha(0.5f);
+
 			return true;
+		}
+
+		private void resetAllMarkersAlpha() {
+			final Set<Marker> markers = this.state.markerParkingLocations.keySet();
+
+			for (final Marker marker : markers) {
+				marker.setAlpha(1.0f);
+			}
 		}
 	}
 
@@ -633,8 +646,7 @@ public class MapActivity extends FragmentActivity {
 			final OnMarkerClickListener onMarkerClickListener =
 					new OnMarkerClickListener(this.state, this.viewUpdater);
 
-			this.state.googleMap.setOnMarkerClickListener(
-					onMarkerClickListener);
+			this.state.googleMap.setOnMarkerClickListener(onMarkerClickListener);
 		}
 	}
 
