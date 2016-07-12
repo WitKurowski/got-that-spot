@@ -15,7 +15,6 @@
 	<string name="select_nearby_parking_location">Select a nearby parking location</string>
 	<string name="successfully_reserved">Successfully reserved</string>
 	<string name="reserve">Reserve</string>
-	<string name="title_activity_map">Map</string>
 	<string name="unable_to_cancel_parking_location_x">Unable to cancel parking location "%1$s".</string>
 	<string name="unable_to_reserve_parking_location_x">Unable to reserve parking location "%1$s".</string>
 	<string name="unable_to_retrieve_nearest_parking_locations">Unable to retrieve nearest parking locations.</string>
