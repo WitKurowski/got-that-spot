@@ -331,7 +331,7 @@ public class MapActivity extends FragmentActivity {
 
 			this.viewUpdater.update();
 
-			return false;
+			return true;
 		}
 	}
 
